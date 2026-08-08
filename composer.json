@@ -1,0 +1,40 @@
+{
+    "name": "puff/di",
+    "description": "Fast, Fiber-aware dependency injection container",
+    "type": "library",
+    "keywords": [
+        "php",
+        "dependency-injection",
+        "container",
+        "fiber",
+        "psr-11",
+        "puff"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "psr/container": "^2.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Puff\\Di\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Puff\\Di\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "phpunit tests"
+    }
+}
