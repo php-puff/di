@@ -1,12 +1,13 @@
 <?php
 
-declare(strict_types=1);
 /*
- * PHP Unison Fiber Framework
+ * PHP Fiber Framework
  * https://github.com/php-puff/di
  * https://github.com/php-puff/di/issues
  * Copyright (c) Puff
  */
+
+declare(strict_types=1);
 
 namespace Puff\Di\Tests;
 
@@ -53,6 +54,27 @@ final class ContainerTest extends TestCase
             $container->scopedInstance('request', $request);
             $fiberValue = $container->make('request');
             $container->clearScope();
+        });
+        $fiber->start();
+
+        self::assertNotSame($main, $fiberValue);
+        self::assertSame($main, $container->make('request'));
+    }
+
+    public function testScopedBindingsAreReusedOnlyInsideCurrentFiber(): void
+    {
+        $container = new Container();
+        $container->scoped('request', static fn (): object => new \stdClass());
+
+        $main = $container->make('request');
+        self::assertSame($main, $container->make('request'));
+
+        $fiberValue = null;
+        $fiber = new \Fiber(function () use ($container, &$fiberValue): void {
+            $fiberValue = $container->make('request');
+            self::assertSame($fiberValue, $container->make('request'));
+            $container->clearScope();
+            self::assertNotSame($fiberValue, $container->make('request'));
         });
         $fiber->start();
 

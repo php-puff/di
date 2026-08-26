@@ -1,12 +1,13 @@
 <?php
 
-declare(strict_types=1);
 /*
- * PHP Unison Fiber Framework
+ * PHP Fiber Framework
  * https://github.com/php-puff/di
  * https://github.com/php-puff/di/issues
  * Copyright (c) Puff
  */
+
+declare(strict_types=1);
 
 namespace Puff\Di;
 
@@ -26,7 +27,7 @@ class Container implements ContainerInterface, ArrayAccess
 {
     protected static ?self $instance = null;
 
-    /** @var array<string, array{concrete: mixed, shared: bool}> */
+    /** @var array<string, array{concrete: mixed, shared: bool, scoped: bool}> */
     protected array $bindings = [];
     protected array $instances = [];
     protected array $aliases = [];
@@ -62,6 +63,7 @@ class Container implements ContainerInterface, ArrayAccess
         $this->bindings[$this->getAlias($abstract)] = [
             'concrete' => $concrete ?? $abstract,
             'shared' => $shared,
+            'scoped' => false,
         ];
     }
 
@@ -82,6 +84,15 @@ class Container implements ContainerInterface, ArrayAccess
         if (!$this->bound($abstract)) {
             $this->singleton($abstract, $concrete);
         }
+    }
+
+    public function scoped(string $abstract, mixed $concrete = null): void
+    {
+        $this->bindings[$this->getAlias($abstract)] = [
+            'concrete' => $concrete ?? $abstract,
+            'shared' => false,
+            'scoped' => true,
+        ];
     }
 
     public function instance(string $abstract, mixed $instance): mixed
@@ -142,10 +153,17 @@ class Container implements ContainerInterface, ArrayAccess
         if ($events) {
             $this->fire($this->beforeResolvingCallbacks, $abstract, null);
         }
-        $binding = $this->bindings[$abstract] ?? ['concrete' => $abstract, 'shared' => false];
+        $binding = $this->bindings[$abstract] ?? [
+            'concrete' => $abstract,
+            'shared' => false,
+            'scoped' => false,
+        ];
         $object = $this->build($binding['concrete'], $parameters);
         if ($binding['shared'] && $parameters === []) {
             $this->instances[$abstract] = $object;
+        }
+        if ($binding['scoped'] && $parameters === []) {
+            $this->scope->set($abstract, $object);
         }
         $this->resolved[$abstract] = true;
         if ($events) {
